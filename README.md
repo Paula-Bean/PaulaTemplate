@@ -1,17 +1,12 @@
-# Readme-test
-Readme-test
+# Paulatemplate
+
+Paulatemplate is a template processor with a terse syntax.
 
 <table><tr>
    <td><pre>
-def abc():
-    a += 1
-    if b:
-        b += 1
+      Hello <b>{=name}</b>, how are you?
    </pre></td>
    <td><pre>
-import uvw
-uvw.a = 'yes'
-for i in uvw.items:
-    print(i)
-   </pre></td>
+      Hello <b>John</b>, how are you?
+</pre></td>
 </tr></table>
