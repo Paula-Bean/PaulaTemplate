@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # encoding: utf8
 
 # TODO: { } to « »  (MacOS: Alt-\ and Shift-Alt-\)
@@ -42,11 +43,11 @@ class Container(list):
 
     def render(self, vars, last=False, level=0):
         if verbose:
-            print "%sContainer.render(vars=%s,last=%s) type(vars)=%s, self.name=%s" % (indent(level), vars, last, type(vars), self.name)
+            print("%sContainer.render(vars=%s,last=%s) type(vars)=%s, self.name=%s" % (indent(level), vars, last, type(vars), self.name))
         output = ""
         for child in self:
             if verbose:
-                print "%sContainer.render child %s" % (indent(level), child)
+                print("%sContainer.render child %s" % (indent(level), child))
             value = child.render(vars, last, level + 1)
             if value:
                 try:
@@ -69,7 +70,7 @@ class Lit(Container):
 
     def render(self, vars, last=None, level=0):
         if verbose:
-            print "%sLit.render(vars=%s,last=%s) type(vars)=%s, self=%s" % (indent(level), vars, last, type(vars), self)
+            print("%sLit.render(vars=%s,last=%s) type(vars)=%s, self=%s" % (indent(level), vars, last, type(vars), self))
         return self[0]
 
 
@@ -86,15 +87,15 @@ class Sep(Container):
 
     def render(self, vars, last, level):
         if verbose:
-            print "%sSep.render(vars=%s) type(vars)=%s, self=%s" % (indent(level), vars, type(vars), self)
+            print("%sSep.render(vars=%s) type(vars)=%s, self=%s" % (indent(level), vars, type(vars), self))
         if last:
             if verbose:
-                print "%sSep.render last is True, empty string returned" % indent(level)
+                print("%sSep.render last is True, empty string returned" % indent(level))
             return ""
         output = ""
         for child in self:
             if verbose:
-                print "%sSep.render child %s" % (indent(level), child)
+                print("%sSep.render child %s" % (indent(level), child))
             value = child.render(vars, last, level + 1)
             if value:
                 output += value
@@ -112,14 +113,14 @@ class Sub(Container):
 
     def render(self, vars, last, level):
         if verbose:
-            print "%sSub.render(vars=%s) type(vars)=%s, self.name=%s" % (indent(level), vars, type(vars), self.name)
+            print("%sSub.render(vars=%s) type(vars)=%s, self.name=%s" % (indent(level), vars, type(vars), self.name))
         try:
             value = vars[self.name]
         except TypeError:
             value = getattr(vars, self.name)
         except KeyError:
             return '<span class="paulatemplate_error" style="background-color: red; color: white;">Template error in Sub: unknown variable "%s"</span>' % self.name
-        if isinstance(value, (int, float, long)):
+        if isinstance(value, (int, float)):
             value = str(value)
         return value
 
@@ -136,18 +137,18 @@ class Cond(Container):
 
     def render(self, vars, last, level):
         if verbose:
-            print "%sCond.render(vars=%s) type(vars)=%s, self.name=%s, self.inverting=%s" % (indent(level), vars, type(vars), self.name, self.inverting)
+            print("%sCond.render(vars=%s) type(vars)=%s, self.name=%s, self.inverting=%s" % (indent(level), vars, type(vars), self.name, self.inverting))
         ok = vars.get(self.name)  # Assume missing template variable is False.
         if self.inverting:
             ok = not ok
         if not ok:
             if verbose:
-                print "%sCond.render cond is False, empty string returned" % indent(level)
+                print("%sCond.render cond is False, empty string returned" % indent(level))
             return ""
         output = ""
         for child in self:
             if verbose:
-                print "%sCond.render child %s" % (indent(level), child)
+                print("%sCond.render child %s" % (indent(level), child))
             value = child.render(vars, last, level + 1)
             if value:
                 output += value
@@ -166,7 +167,7 @@ class Rep(Container):
 
     def render(self, vars, last, level):
         if verbose:
-            print "%sRep.render(vars=%s) type(vars)=%s, self.name=%s" % (indent(level),vars,type(vars),self.name)
+            print("%sRep.render(vars=%s) type(vars)=%s, self.name=%s" % (indent(level),vars,type(vars),self.name))
         output = ""
         #if not self.name in vars:
         #    raise NameNotFound("A required variable name '%s' was not present in '%r'" % (self.name, vars))
@@ -179,11 +180,11 @@ class Rep(Container):
             return '<span class="paulatemplate_error" style="background-color: red; color: white;">Template error in Rep: unknown variable "%s"</span>' % self.name
         for nr, subvar in enumerate(subvars):
             if verbose:
-                print "%sRep.render subvar=%s, type(subvar)=%s" % (indent(level),subvar,type(subvar))
+                print("%sRep.render subvar=%s, type(subvar)=%s" % (indent(level),subvar,type(subvar)))
             for child in self:
                 last = nr == len(subvars)-1
                 if verbose:
-                    print "%sRep.render child %s, last=%s" % (indent(level), child,last)
+                    print("%sRep.render child %s, last=%s" % (indent(level), child,last))
                 output += child.render(subvar, last, level+1)
         return output
 
@@ -255,11 +256,11 @@ createinfo = {
 
 def compile(node, into, level=0):
     if verbose:
-        print "%s compile: " % indent(level), node
+        print("%s compile: " % indent(level), node)
     for pos, item in enumerate(node):
         if isinstance(item, list):
             if verbose:
-                print "%s #%d list: %r" % (indent(level), pos, item)
+                print("%s #%d list: %r" % (indent(level), pos, item))
             head = item[0]
             if not head[0] in createinfo:
                 if exceptionless:
@@ -269,7 +270,7 @@ def compile(node, into, level=0):
             first, rest = splitfirst(head)
             operator, name = first[0], first[1:]
             if verbose:
-                print "%s operator %s, name %s, rest %r" % (indent(level), operator, name, rest)
+                print("%s operator %s, name %s, rest %r" % (indent(level), operator, name, rest))
             # Create correct container
             factoryfunc, options = createinfo[operator]
             ob = factoryfunc(name)
@@ -280,21 +281,21 @@ def compile(node, into, level=0):
             into.append(compile(item, ob, level + 1))
         else:
             if verbose:
-                print "%s #%d item: %s" % (indent(level), pos, item)
+                print("%s #%d item: %s" % (indent(level), pos, item))
             into.append(Lit(item))
     return into
 
 
 def process(sourcetext):
     if verbose:
-        print "\n\n\nCompile phase"
+        print("\n\n\nCompile phase")
     tokens = lexer(feed(sourcetext))
     # root = Container()
     root = []
     parse(feed(tokens), root)
     result = compile(root, Container())
     if verbose:
-        print "Compile result:", result
+        print("Compile result:", result)
     return result
 
 
@@ -328,12 +329,12 @@ class Paulatemplate(object):
     def render(self, vars):
         """Renders the template to a string, using the supplied variables."""
         if verbose:
-            print "\nRender phase"
+            print("\nRender phase")
         if not self.root:
             raise Exception("You should either pass a template as a string in the constructor, or use 'fromfile' to read the template from file")
         result = self.root.render(vars)
         if verbose:
-            print "Render result:", result
+            print("Render result:", result)
         return result
 
 
@@ -345,7 +346,7 @@ class Test(unittest.TestCase):
         This name is used in error reporting."""
         tems = "{=name}"
         tem = Paulatemplate(tems, "nametest")
-        self.assertEquals(tem.name, "nametest")
+        self.assertEqual(tem.name, "nametest")
 
     def test_badmetachar(self):
         tems = "{&name}"  # Note that '&' is illegal after a '{'.
@@ -363,11 +364,11 @@ class Test(unittest.TestCase):
         exceptionless = prevexceptionless
 
     def test_splitting(self):
-        self.assertEquals(splitfirst(""), ("", ""))
-        self.assertEquals(splitfirst("?hi"), ("?hi", ""))
-        self.assertEquals(splitfirst("?hi there"), ("?hi", "there"))
-        self.assertEquals(splitfirst("hi"), ("", "hi"))
-        self.assertEquals(splitfirst("hi there"), ("", "hi there"))
+        self.assertEqual(splitfirst(""), ("", ""))
+        self.assertEqual(splitfirst("?hi"), ("?hi", ""))
+        self.assertEqual(splitfirst("?hi there"), ("?hi", "there"))
+        self.assertEqual(splitfirst("hi"), ("", "hi"))
+        self.assertEqual(splitfirst("hi there"), ("", "hi there"))
 
     def test_render(self):
         """Test a number of progressively complex render cases. (template source code, context variables, expected result text)."""
@@ -502,7 +503,7 @@ class Test(unittest.TestCase):
 
         for tems, temv, expected in goodcases:
             tem = Paulatemplate(tems)  # tem.pprint()
-            self.assertEquals(tem.render(temv), expected)
+            self.assertEqual(tem.render(temv), expected)
 
         ''' TODO: This still needs some work - sensible error reporting.
         badcases = (
@@ -522,7 +523,7 @@ class Test(unittest.TestCase):
         Entry = collections.namedtuple("Entry", ["name", "telephone"])
         phonebook = [Entry("Mary", "0203898"), Entry("Jan", "0683928")]
         tem = Paulatemplate("{#phonebook {=name} {=telephone}{/sep , }}")
-        self.assertEquals(tem.render(dict(phonebook=phonebook)), "Mary 0203898, Jan 0683928")
+        self.assertEqual(tem.render(dict(phonebook=phonebook)), "Mary 0203898, Jan 0683928")
 
 
 def test_performance():
@@ -563,9 +564,9 @@ def test_performance():
     start = time.time()
     res = tem.render(d)
     dur = time.time() - start
-    print "paulatemplate: %dMB produced in %.3f sec:" % (len(res) / 1024 / 1024, dur)
+    print("paulatemplate: %dMB produced in %.3f sec:" % (len(res) / 1024 / 1024, dur))
     if nr < 3:
-        print res
+        print(res)
     #
     from jinja2 import Template
     tem = Template("""
@@ -585,9 +586,9 @@ def test_performance():
     start = time.time()
     res = tem.render(dict(books=books))
     dur = time.time() - start
-    print "jinja2: %dMB produced in %.3f sec:" % (len(res) / 1024 / 1024, dur)
+    print("jinja2: %dMB produced in %.3f sec:" % (len(res) / 1024 / 1024, dur))
     if nr < 3:
-        print res
+        print(res)
 
 
 if __name__ == "__main__":

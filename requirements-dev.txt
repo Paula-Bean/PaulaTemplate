@@ -1,0 +1,4 @@
+coverage==4.5.1
+pudb==2017.1.4
+Pygments==2.2.0
+urwid==2.0.1
