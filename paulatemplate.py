@@ -1,10 +1,8 @@
-#!/usr/bin/env python2
 # encoding: utf8
 
 # TODO: { } to « »  (MacOS: Alt-\ and Shift-Alt-\)
 # TODO: 100% coverage
 # TODO: spotless unittests
-# TODO: convert to Python3
 # TODO: be able to access members in template vars: {=person.lastname}
 # TODO: with tokens and Lits and Conds etc, store the line/charpos of the position in the template for better error messages
 # TODO: String-only mode
@@ -23,7 +21,7 @@ CHOPITEM = 2
 whitechars = re.compile("\s")
 rangerep = re.compile("(\w+)\:(-?[0-9|x]+):(-?[0-9|x]+)")
 
-verbose = False
+verbose = True
 exceptionless = True  # False: throw exceptions when something is wrong with the template or rendering it; True: insert an error in the output text instead.
 
 
@@ -43,17 +41,17 @@ class Container(list):
 
     def render(self, vars, last=False, level=0):
         if verbose:
-            print("%sContainer.render(vars=%s,last=%s) type(vars)=%s, self.name=%s" % (indent(level), vars, last, type(vars), self.name))
+            print(f"{indent(level)}Container.render(vars={vars},last={last}) type(vars)={type(vars)}, self.name={self.name}.")
         output = ""
         for child in self:
             if verbose:
-                print("%sContainer.render child %s" % (indent(level), child))
+                print(f"{indent(level)}Container.render child {child}")
             value = child.render(vars, last, level + 1)
             if value:
                 try:
                     output += value
                 except UnicodeDecodeError as e:
-                    msg = "Container.render() child %s raises %s, value: %s, %r" % (child.__class__.__name__, e, type(value), value)
+                    msg = f"Container.render() child {child.__class__.__name__} raises {e}, value: {type(value)}, {repr(value)}"
                     raise Exception(msg)
         return output
 
@@ -370,8 +368,7 @@ class Test(unittest.TestCase):
         self.assertEqual(splitfirst("hi"), ("", "hi"))
         self.assertEqual(splitfirst("hi there"), ("", "hi there"))
 
-    def test_render(self):
-        """Test a number of progressively complex render cases. (template source code, context variables, expected result text)."""
+    def test_simplesubstitution(self):
         goodcases = (
             # Empty template.
             ("", {}, ""),
@@ -401,7 +398,14 @@ class Test(unittest.TestCase):
             ('{?useimg hallo <img src="path/names/{=component}/with/{=component}.jpg">}',
                 {"useimg": True, "component": "filesystem"},
                 'hallo <img src="path/names/filesystem/with/filesystem.jpg">'),
+            )
 
+        for tems, temv, expected in goodcases:
+            tem = Paulatemplate(tems)
+            self.assertEqual(tem.render(temv), expected)
+
+    def test_simplerepetitions(self):
+        goodcases = (
             # Simple repetitions.
             ("{#cls{=co}}",
                 {"cls": ({"co": "red"}, {"co": "gr"}, {"co": "bl"})},
@@ -418,25 +422,6 @@ class Test(unittest.TestCase):
             ("{#cls {=co} _}",
                 {"cls": ({"co": "red"}, {"co": "gr"}, {"co": "bl"})},
                 "red _gr _bl _"),
-            # Simple conditions.
-            ("throw a {?condition big }party",
-                {"condition": True},
-                "throw a big party"),
-            ("throw a {?condition big }tantrum",
-                {"condition": 42},
-                "throw a big tantrum"),
-            ("throw a {?condition big }party",
-                {"condition": False},
-                "throw a party"),
-            ("throw a {?condition big }tantrum",
-                {"condition": None},
-                "throw a tantrum"),
-            ("A!{?condition B}!C!{!condition D}!E",
-                {"condition": True},
-                "A!B!C!!E"),
-            ("A!{?condition B}!C!{!condition D}!E",
-                {"condition": False},
-                "A!!C!D!E"),
             # Repeats.
             ("{#a{=b}{=c}}",
                 {"a": ({"b": 11, "c": 22},)},
@@ -458,21 +443,56 @@ class Test(unittest.TestCase):
             ("{#blop\n{=you}\n}",
                 dict(blop=(dict(you=123), dict(you=456))),
                 "123\n456\n"),
-            # A join()-like separator.
-            ("{#colors {=color}{/comma , }}",
-                dict(colors=(dict(color="red"), dict(color="green"),
-                     dict(color="blue"))),
-                "red, green, blue"),
             # More repeats.
             ("buy {=count} articles: {#articles {=nam} txt {=pri}, }", {
                 "count": 2,
                 "articles": ({"nam": "Ur", "pri": 1}, {"nam": "Mo", "pri": 2})
                 },
                 "buy 2 articles: Ur txt 1, Mo txt 2, "),
-
             ("sell {=count} stocks: {#articles {=nam} &euro; {=pri}{/comma , }}",
                 {"count": 2, "articles": ({"nam": "APPL", "pri": 320}, {"nam": "GOOG", "pri": 120})},
                 "sell 2 stocks: APPL &euro; 320, GOOG &euro; 120"),
+            )
+        for tems, temv, expected in goodcases:
+            tem = Paulatemplate(tems)
+            self.assertEqual(tem.render(temv), expected)
+
+
+    def test_conditions(self):
+        goodcases = (
+            # Simple conditions.
+            ("throw a {?condition big }party",
+                {"condition": True},
+                "throw a big party"),
+            ("throw a {?condition big }tantrum",
+                {"condition": 42},
+                "throw a big tantrum"),
+            ("throw a {?condition big }party",
+                {"condition": False},
+                "throw a party"),
+            ("throw a {?condition big }tantrum",
+                {"condition": None},
+                "throw a tantrum"),
+            ("A!{?condition B}!C!{!condition D}!E",
+                {"condition": True},
+                "A!B!C!!E"),
+            ("A!{?condition B}!C!{!condition D}!E",
+                {"condition": False},
+                "A!!C!D!E"),
+            )
+        for tems, temv, expected in goodcases:
+            tem = Paulatemplate(tems)
+            self.assertEqual(tem.render(temv), expected)
+
+
+    def test_complex(self):
+        """Test a few complex render cases."""
+        goodcases = (  # sequence of tuples of (template source code, context variables, expected result text)
+            # A join()-like separator.
+            ("{#colors {=color}{/comma , }}",
+                dict(colors=(dict(color="red"), dict(color="green"),
+                     dict(color="blue"))),
+                "red, green, blue"),
             # Nested repeats.
             ("Contents: {#chapters Chapter {=name}. {#sections Section {=name}. }",
                 {
@@ -502,21 +522,24 @@ class Test(unittest.TestCase):
             )
 
         for tems, temv, expected in goodcases:
-            tem = Paulatemplate(tems)  # tem.pprint()
+            tem = Paulatemplate(tems)
             self.assertEqual(tem.render(temv), expected)
 
-        ''' TODO: This still needs some work - sensible error reporting.
+
+    ''' Unittest broken? Or am I lost?
+    def test_badcases(self):
+        # TODO: This still needs some work - sensible error reporting!
         badcases = (
             ("{#a {=b} {=c}}", {}), # required variables missing
             ("=a}", dict(a=42)), # missing opening {
-            # ("{=a", dict(a=42)), # missing closing {
+            ("{=a", dict(a=42)), # missing closing {
             )
 
         global exceptionless
         exceptionless = False
         for tems, temv in badcases:
             self.assertRaises(Exception, Paulatemplate(tems).render(temv))
-        '''
+    '''
 
     def test_namedtuple(self):
         import collections
